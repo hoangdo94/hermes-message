@@ -59,10 +59,31 @@ function sendMessage(to, message) {
             body: message,
             extension: {
                 save_to_history: 1,
-            }
+            },
+            senderId: QBUser.id
         };
+        console.log(msg);
         ids.forEach(function(id) {
-            QB.chat.send(id, msg);
+            var params = {
+                type: 3,
+                occupants_ids: [id]
+            };
+            QB.chat.dialog.create(params, function(err, createdDialog) {
+                if (err) {
+                    console.log(err);
+                } else {
+                    var msg = {
+                        type: 'chat',
+                        body: message,
+                        extension: {
+                            save_to_history: 1,
+                        },
+                        senderId: QBUser.id,
+                    };
+                    var opponentId = QB.chat.helpers.getRecipientId(createdDialog.occupants_ids, QBUser.id);
+                    QB.chat.send(opponentId, msg);
+                }
+            });
         });
         $('#message-form textarea').val('');
         enableSubmitButton();
@@ -72,6 +93,8 @@ function sendMessage(to, message) {
 
 function getUserChatIds(role, callback) {
     var query = new Parse.Query(Parse.Object.extend('User'));
+    query.exists('chat_user_id');
+    query.limit(1000);
     if (role === 'tutor') {
         console.log('find tutors');
         query.equalTo('role', 2);
@@ -81,17 +104,15 @@ function getUserChatIds(role, callback) {
         query.equalTo('role', 1);
     }
     if (role === 'all') {
-    	console.log('find all');
-    	query.containedIn('role', [1,2]);
+        console.log('find all');
+        query.containedIn('role', [1, 2]);
     }
     query.find({
         success: function(results) {
             var ids = [];
             results.forEach(function(result) {
                 var chatId = result.get('chat_user_id');
-                if (chatId) {
-                    ids.push(chatId);
-                }
+                ids.push(chatId);
             });
             if (callback) {
                 callback(ids);
