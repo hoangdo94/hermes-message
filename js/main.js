@@ -75,11 +75,14 @@ function getUserChatIds(role, callback) {
     if (role === 'tutor') {
         console.log('find tutors');
         query.equalTo('role', 2);
-    } else if (role === 'student') {
+    }
+    if (role === 'student') {
         console.log('find students');
         query.equalTo('role', 1);
-    } else {
-        console.log('find all');
+    }
+    if (role === 'all') {
+    	console.log('find all');
+    	query.containedIn('role', [1,2]);
     }
     query.find({
         success: function(results) {
